@@ -31,7 +31,7 @@ provide-module beancount %{
   add-highlighter shared/beancount/directive/code/tag regex '#[\w-]+' 0:attribute
   add-highlighter shared/beancount/directive/code/account regex '((Assets|Liabilities|Equity|Income|Expenses)[:\w-]+)' 0:identifier
   add-highlighter shared/beancount/directive/code/commodity regex '(?<=\s)[A-Z]+(?=\s)' 0:value
-  add-highlighter shared/beancount/directive/code/value regex '-?\d+(\.\d+)?' 0:value
+  add-highlighter shared/beancount/directive/code/value regex '(?<=\h)-?\d+(\.\d+)?' 0:value
 
   # postings are lines indented with two spaces
   add-highlighter shared/beancount/posting region '^  ' $ regions
