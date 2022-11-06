@@ -26,7 +26,7 @@ provide-module beancount %{
   add-highlighter shared/beancount/directive/string region '"' '"' fill string
   add-highlighter shared/beancount/directive/code default-region group
   add-highlighter shared/beancount/directive/code/date regex ^\d{4}-\d{2}-\d{2} 0:type
-  add-highlighter shared/beancount/directive/code/keyword regex '(open|close|balance|\*)' 0:operator
+  add-highlighter shared/beancount/directive/code/keyword regex '(open|close|balance|pad|\*)' 0:operator
   add-highlighter shared/beancount/directive/code/incomplete regex '!' 0:error
   add-highlighter shared/beancount/directive/code/tag regex '#[\w-]+' 0:attribute
   add-highlighter shared/beancount/directive/code/commodity regex '(?<=\s)[A-Z]+(?=\s)' 0:value
