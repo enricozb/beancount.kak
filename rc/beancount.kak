@@ -14,20 +14,29 @@ hook -group beancount-highlight global WinSetOption filetype=beancount %{
 provide-module beancount %{
   add-highlighter shared/beancount regions
 
-  add-highlighter shared/beancount/comment region '(^|\h)\K;' $ fill comment
+  add-highlighter shared/beancount/comment region ';' '$' fill comment
 
   add-highlighter shared/beancount/stack region '(pop|push)tag' $ group
   add-highlighter shared/beancount/stack/keyword regex '(pop|push)tag' 0:keyword
   add-highlighter shared/beancount/stack/tag regex '#[\w-]+' 0:attribute
 
-  # transactions start at dates (YYYY-MM-DD) and end at blank lines (^$)
-  add-highlighter shared/beancount/transaction region '^\d{4}-\d{2}-\d{2}' '^$' group
-  add-highlighter shared/beancount/transaction/comment regex ';[^\n]*$' 0:comment
-  add-highlighter shared/beancount/transaction/tag regex '#[\w-]+' 0:attribute
-  add-highlighter shared/beancount/transaction/date regex ^\d{4}-\d{2}-\d{2} 0:type
-  add-highlighter shared/beancount/transaction/string regex '"[^"]*"' 0:string
-  add-highlighter shared/beancount/transaction/incomplete regex '!' 0:error
-  add-highlighter shared/beancount/transaction/complete regex '\*' 0:operator
-  add-highlighter shared/beancount/transaction/posting regex '^  ([a-zA-Z0-9-:]*)(\h+[-\d.]+ \w+)?' 1:identifier 2:value
+  # directives start at dates (YYYY-MM-DD) and end with the newline
+  add-highlighter shared/beancount/directive region ^\d{4}-\d{2}-\d{2} $ regions
+  add-highlighter shared/beancount/directive/comment region ';' '$' fill comment
+  add-highlighter shared/beancount/directive/string region '"' '"' fill string
+  add-highlighter shared/beancount/directive/code default-region group
+  add-highlighter shared/beancount/directive/code/date regex ^\d{4}-\d{2}-\d{2} 0:type
+  add-highlighter shared/beancount/directive/code/keyword regex '(open|close|balance|\*)' 0:operator
+  add-highlighter shared/beancount/directive/code/incomplete regex '!' 0:error
+  add-highlighter shared/beancount/directive/code/tag regex '#[\w-]+' 0:attribute
+  add-highlighter shared/beancount/directive/code/commodity regex '(?<=\s)[A-Z]+(?=\s)' 0:value
+  add-highlighter shared/beancount/directive/code/account regex '((Assets|Liabilities|Equity|Income|Expenses)[:\w-]+)' 0:identifier
 
+  # postings are lines indented with two spaces
+  add-highlighter shared/beancount/posting region '^  ' $ regions
+  add-highlighter shared/beancount/posting/comment region ';' '$' fill comment
+  add-highlighter shared/beancount/posting/code default-region group
+  add-highlighter shared/beancount/posting/code/account regex '((Assets|Liabilities|Equity|Income|Expenses)[:\w-]+)' 0:identifier
+  add-highlighter shared/beancount/posting/code/commodity regex '(?<=\s)[A-Z]+(?=\s)' 0:value
+  add-highlighter shared/beancount/posting/code/value regex '-?\d+(\.\d+)?' 0:value
 }
