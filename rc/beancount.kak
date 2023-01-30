@@ -39,5 +39,5 @@ provide-module beancount %{
   add-highlighter shared/beancount/posting/code default-region group
   add-highlighter shared/beancount/posting/code/account regex '((Assets|Liabilities|Equity|Income|Expenses)[:\w-]+)' 0:identifier
   add-highlighter shared/beancount/posting/code/commodity regex '(?<=\s)[A-Z]+(?=\s)' 0:value
-  add-highlighter shared/beancount/posting/code/value regex '-?\d+(\.\d+)?' 0:value
+  add-highlighter shared/beancount/posting/code/value regex '(?<=\h)-?\d+(\.\d+)?' 0:value
 }
