@@ -14,7 +14,15 @@ hook -group beancount-highlight global WinSetOption filetype=beancount %{
     unmap window normal <ret>
   }
 
-  declare-option -hidden str-list beancount_accounts
+  declare-option -hidden str-list beancount_accounts %sh{
+    rg \
+      --no-filename \
+      --only-matching \
+      --glob '*.beancount' \
+      '(Assets|Liabilities|Equity|Income|Expenses)[:\w-]+' \
+      "$(git rev-parse --show-toplevel)" \
+    | sort | uniq
+  }
 
   map buffer normal <ret> ': complete-transaction<ret>'
 }
@@ -121,14 +129,6 @@ provide-module beancount %{
   }
 
   define-command complete-account -docstring "prompt for an account with completions" %{
-    # set beancount_accounts to all accounts in the buffer
-    try %{
-      evaluate-commands -draft %{
-        execute-keys '%s((Assets|Liabilities|Equity|Income|Expenses)[:\w-]+)<ret>'
-        set-option buffer beancount_accounts %sh{ printf "$kak_selections" | tr ' ' '\n' }
-      }
-    }
-
     prompt 'account: ' -shell-script-candidates %{ printf "$kak_opt_beancount_accounts" } %{
       execute-keys "i%val{text}<esc>"
     }
