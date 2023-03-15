@@ -54,7 +54,7 @@ provide-module beancount %{
   add-highlighter shared/beancount/posting/comment region ';' '$' fill comment
   add-highlighter shared/beancount/posting/code default-region group
   add-highlighter shared/beancount/posting/code/account regex '((Assets|Liabilities|Equity|Income|Expenses)[:\w-]+)' 0:identifier
-  add-highlighter shared/beancount/posting/code/commodity regex '(?<=\s)[A-Z]+(?=\s)' 0:value
+  add-highlighter shared/beancount/posting/code/commodity regex '(?<=\s)[A-Z][A-Z._-]+(?=\s)' 0:value
   add-highlighter shared/beancount/posting/code/value regex '(?<=\h)-?\d+(\.\d+)?' 0:value
 
   define-command bofa-comments -docstring "format bofa postings to comments" %{
