@@ -8,12 +8,15 @@ hook global WinSetOption filetype=beancount %{
 
 hook -group beancount-highlight global WinSetOption filetype=beancount %{
   add-highlighter window/beancount ref beancount
+
   hook -once -always window WinSetOption filetype=.* %{
     remove-highlighter window/beancount
     unmap window normal <ret>
   }
 
   declare-option -hidden str-list beancount_accounts
+
+  map buffer normal <ret> ': complete-transaction<ret>'
 }
 
 provide-module beancount %{
@@ -57,7 +60,9 @@ provide-module beancount %{
     # prepend `;` to every posting
     execute-keys -draft 's\d{2}/\d{2}<ret><a-;>i; <esc>'
     # remove newlines within a posting
-    execute-keys -draft 's^[^;]<ret>i<backspace> <esc>,'
+    try %{
+      execute-keys -draft 's^[^;]<ret>i<backspace> <esc>,'
+    } catch %{}
   }
 
   define-command complete-transaction -docstring "next step in transaction completion" %{
@@ -136,6 +141,4 @@ provide-module beancount %{
       complete-account
     }
   }
-
-  map window normal <ret> ': complete-transaction<ret>'
 }
