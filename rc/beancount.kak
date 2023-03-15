@@ -62,7 +62,7 @@ provide-module beancount %{
     # remove newlines within a posting
     try %{
       execute-keys -draft 's^[^;]<ret>i<backspace> <esc>,'
-    } catch %{}
+    }
   }
 
   define-command complete-transaction -docstring "next step in transaction completion" %{
@@ -122,9 +122,11 @@ provide-module beancount %{
 
   define-command complete-account -docstring "prompt for an account with completions" %{
     # set beancount_accounts to all accounts in the buffer
-    evaluate-commands -draft %{
-      execute-keys '%s((Assets|Liabilities|Equity|Income|Expenses)[:\w-]+)<ret>'
-      set-option buffer beancount_accounts %sh{ printf "$kak_selections" | tr ' ' '\n' }
+    try %{
+      evaluate-commands -draft %{
+        execute-keys '%s((Assets|Liabilities|Equity|Income|Expenses)[:\w-]+)<ret>'
+        set-option buffer beancount_accounts %sh{ printf "$kak_selections" | tr ' ' '\n' }
+      }
     }
 
     prompt 'account: ' -shell-script-candidates %{ printf "$kak_opt_beancount_accounts" } %{
