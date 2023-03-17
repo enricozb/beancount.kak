@@ -14,6 +14,8 @@ hook -group beancount-highlight global WinSetOption filetype=beancount %{
     unmap window normal <ret>
   }
 
+  declare-option -hidden str beancount_account
+
   declare-option -hidden str-list beancount_accounts %sh{
     rg \
       --no-filename \
@@ -24,7 +26,7 @@ hook -group beancount-highlight global WinSetOption filetype=beancount %{
     | sort | uniq
   }
 
-  map buffer normal <ret> ': complete-transaction<ret>'
+  map buffer normal <ret> ': beancount-complete<ret>'
 }
 
 provide-module beancount %{
@@ -73,59 +75,37 @@ provide-module beancount %{
     }
   }
 
-  define-command complete-transaction -docstring "next step in transaction completion" %{
-    # select the current line
-    execute-keys ';xH'
+  define-command -override beancount-complete -docstring "autocomplete an account or transaction directive" %{
+    execute-keys ';x'
 
     try %{
-      # check if this is a commented line
-      execute-keys -draft 's^;<ret>'
-
-      # if so, create a new directive, with the previous transaction's date,
-      # or the current date if this is the first transaction
-      try %{
-        execute-keys -draft 'Z<a-/>^\d{4}-\d{2}-\d{2}<ret>yzo<esc>P'
-        execute-keys 'jH<a-;>'
-      } catch %{
-        execute-keys "o%sh{date --iso}<esc>h4H<a-;>"
-      }
-
+      # in a comment
+      execute-keys 's^;<ret>'
+      complete-transaction
     } catch %{
-      # otherwise, we're already in a directive and must infer the transaction completion state
-      execute-keys %sh{
-        # date -> add directive
-        if expr match "$kak_selection" '[[:digit:]-]\+$'; then
-          printf 'A *<esc>h'
-
-        # date, directive -> add creditor/debtor
-        elif expr match "$kak_selection" '[[:digit:]-]\+ [!*]$'; then
-          printf 'A ""<esc>hi'
-
-        # date, directive, creditor/debtor -> add memo
-        elif expr match "$kak_selection" '[[:digit:]-]\+ [!*] "[^"]*"$'; then
-          printf 'A ""<esc>h'
-
-        # date, directive, creditor/debtor, empty memo -> remove memo and add account
-        elif expr match "$kak_selection" '[[:digit:]-]\+ [!*] "[^"]*" ""$'; then
-          printf ';HHd'
-          printf ': complete-first-posting<ret>'
-
-        # date, directive, creditor/debtor, populated memo -> add account
-        elif expr match "$kak_selection" '[[:digit:]-]\+ [!*] "[^"]*" "[^"]*"$'; then
-          printf ': complete-first-posting<ret>'
-
-        # empty posting -> add account
-        elif expr match "$kak_selection" '  $'; then
-          printf 'l: complete-account<ret>'
-
-        # explicit posting -> add account
-        elif expr match "$kak_selection" '  [[:alpha:]:-]\+ *[[:digit:].-]\+ USD$'; then
-          printf 'o  <esc>'
-          printf ': complete-account<ret>'
-
-        fi
-      }
+      # in a posting
+      execute-keys 's^  <ret>o  <esc>'
+      complete-account
+    } catch %{
+      fail 'not a comment nor a posting'
     }
+  }
+
+  define-command complete-transaction -docstring "complete the transaction directive" %{
+    # add the date
+    execute-keys "xypghddi%sh{date +%Y}-<esc>llr-4l"
+
+    # add the rest of the transaction
+    execute-keys 'i* ""<ret>  <esc>'
+
+    # remove everything but price
+    execute-keys 'x1s  (.*) [^\h]+<ret>d'
+
+    # remove commas or dollar signs (if any) & append USD
+    try %{ execute-keys -draft 'xs(,|\$)<ret>d' }
+    execute-keys -draft 'A USD<esc>'
+
+    complete-first-account
   }
 
   define-command complete-account -docstring "prompt for an account with completions" %{
@@ -134,11 +114,15 @@ provide-module beancount %{
     }
   }
 
-  define-command complete-first-posting -docstring "completes the first posting in a transaction" %{
+  define-command complete-first-account -docstring "completes the first posting in a transaction" %{
     # create the first posting using the previous explicit posting if one exists
     try %{
-      execute-keys "Z<a-/>^  [^ ]+ +[-\d.]+ +[A-Z]+$<ret>yzo<esc>P"
-      execute-keys "s[\d.]+<ret>c"
+      evaluate-commands -draft %{
+        execute-keys 'gk/^\d{4}[^\n]+\n  [A-Z]<ret>t '
+        set-option buffer beancount_account %val{selection}
+      }
+
+      execute-keys "i%opt{beancount_account}<esc>"
     } catch %{
       complete-account
     }
