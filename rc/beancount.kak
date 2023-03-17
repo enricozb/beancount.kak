@@ -75,7 +75,7 @@ provide-module beancount %{
     }
   }
 
-  define-command -override beancount-complete -docstring "autocomplete an account or transaction directive" %{
+  define-command beancount-complete -docstring "autocomplete an account or transaction directive" %{
     execute-keys ';x'
 
     try %{
@@ -92,8 +92,16 @@ provide-module beancount %{
   }
 
   define-command complete-transaction -docstring "complete the transaction directive" %{
+    # duplicate the comment line
+    execute-keys 'xyp'
+
+    # try to remove duplicate date
+    try %{
+      execute-keys '1s(\d{2}/\d{2} )\d{2}/\d{2}<ret>d'
+    }
+
     # add the date
-    execute-keys "xypghddi%sh{date +%Y}-<esc>llr-4l"
+    execute-keys "ghddi%sh{date +%Y}-<esc>llr-4l"
 
     # add the rest of the transaction
     execute-keys 'i* ""<ret>  <esc>'
@@ -103,6 +111,14 @@ provide-module beancount %{
 
     # remove commas or dollar signs (if any) & append USD
     try %{ execute-keys -draft 'xs(,|\$)<ret>d' }
+
+    # add negative sign if one doesn't exist
+    # remove it if it does
+    try %{
+      execute-keys -draft 'xs-<ret>d'
+    } catch %{
+      execute-keys -draft 'x1s (\d)<ret>i-<esc>'
+    }
     execute-keys -draft 'A USD<esc>'
 
     complete-first-account
