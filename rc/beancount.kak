@@ -75,6 +75,15 @@ provide-module beancount %{
     }
   }
 
+  define-command citi-comments -docstring "format citi postings to comments" %{
+    # prepend `;` to every posting
+    execute-keys -draft 'S\$[^\n]+\n<ret><a-;>i; <esc>'
+    # remove newlines within a posting
+    try %{
+      execute-keys -draft 's^[^;]<ret>i<backspace> <esc>,'
+    }
+  }
+
   define-command beancount-complete -docstring "autocomplete an account or transaction directive" %{
     execute-keys ';x'
 
